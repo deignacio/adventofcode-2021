@@ -3,65 +3,76 @@ package main
 import (
 	"adventofcode/utils"
 	"fmt"
-	"math"
+	"strconv"
 	"strings"
 )
 
-
-func BuildGamma(counts map[int]int, size int) float64 {
-	majority := size / 2
-	var value float64 = 0
-	for i := 0; i < size; i++ {
-		count, present := counts[i]
-		if present && count > majority {
-			value += math.Pow(2, float64(i))
-		}
-	}
-	return value
-}
-
-func BuildEpsilon(counts map[int]int, size int) float64 {
-	majority := size / 2
-	var value float64 = 0
-	for i := 0; i < size; i++ {
-		count, present := counts[i]
-		if present && count < majority {
-			value += math.Pow(2, float64(i))
-		}
-	}
-	return value
-}
-
-func ParseCommands(inputs []string) map[int]int {
-	counts := make(map[int]int)
+func HasMajority(inputs []string, position int) bool {
+	count := 0
 	for i:= 0; i < len(inputs); i++ {
 		input := inputs[i]
-		inputLen := len(input)
-		for j:= 0; j < inputLen; j++ {
-			bitPosition := inputLen - j - 1
-			bitValue := input[j:j+1]
-			_, present := counts[bitPosition]
-			if strings.EqualFold("0", bitValue) {
-				if present {
-					counts[bitPosition]++
-				} else {
-					counts[bitPosition] = 1
-				}
-			}
+		bitValue := input[position:position+1]
+		if strings.EqualFold("0", bitValue) {
+			count++
 		}
 	}
+	majority := len(inputs) / 2
+	return count > majority
+}
 
-	return counts
+func FilterByPrefix(inputs []string, prefix string) []string {
+	filtered := make([]string, 0, len(inputs))
+	for i:= 0; i < len(inputs); i++ {
+		input := inputs[i]
+		if strings.HasPrefix(input, prefix) {
+			filtered = append(filtered, input)
+		}
+	}
+	return filtered
+}
+
+func FindOxygen(inputs []string) string {
+	filtered := inputs
+	bitPosition := 0
+	prefix := ""
+	for len(filtered) > 1 {
+		if HasMajority(filtered, bitPosition) {
+			prefix = prefix + "0"
+		} else {
+			prefix = prefix + "1"
+		}
+		filtered = FilterByPrefix(filtered, prefix)
+		bitPosition++
+	}
+
+	return filtered[0]
+}
+
+func FindScrubber(inputs []string) string {
+	filtered := inputs
+	bitPosition := 0
+	prefix := ""
+	for len(filtered) > 1 {
+		if HasMajority(filtered, bitPosition) {
+			prefix = prefix + "1"
+		} else {
+			prefix = prefix + "0"
+		}
+		filtered = FilterByPrefix(filtered, prefix)
+		bitPosition++
+	}
+
+	return filtered[0]
 }
 
 func main() {
 	inputs := utils.AsInputList(utils.ReadInput("/Users/dignacio/Documents/adventofcode/day03/input_part_1"))
-	counts := ParseCommands(inputs)
-	numInputs := len(inputs)
-	fmt.Println(counts)
-	gamma := int(BuildGamma(counts, numInputs))
-	epsilon := int(BuildEpsilon(counts, numInputs))
-	fmt.Println("Output for partOne: ", gamma * epsilon)
+	rawOxygen := FindOxygen(inputs)
+	rawScrubber := FindScrubber(inputs)
+	parsedOxygen, _ := strconv.ParseInt(rawOxygen, 2, 64)
+	parsedScrubber, _ := strconv.ParseInt(rawScrubber, 2, 64)
+	consumption := parsedOxygen * parsedScrubber
+	fmt.Println("Output for partTwo: ", consumption)
 
 
 }
