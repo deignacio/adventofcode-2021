@@ -3,7 +3,6 @@ package main
 import (
 	"adventofcode/utils"
 	"fmt"
-	"math"
 	"regexp"
 	"strconv"
 	"strings"
@@ -105,11 +104,11 @@ func PlayBingo(order []int, boards [][][]int) (int, int) {
 		moves[i], scores[i] = DoesBoardWin(order, board)
 	}
 	fmt.Println(moves, scores)
-	winner := math.MaxInt
+	winner := -1
 	winnerScore := -1
 	for i := 0; i < len(scores); i++ {
 		move := moves[i]
-		if move != -1 && move < winner {
+		if move != -1 && move > winner {
 			winner = move
 			winnerScore = scores[i]
 		}
