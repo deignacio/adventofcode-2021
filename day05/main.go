@@ -133,6 +133,22 @@ func ParseVent(input string) []coord {
 	endY, _ := strconv.Atoi(end[1])
 	coords := make([]coord, 0)
 	if startX != endX && startY != endY {
+		xDir := 1
+		yDir := 1
+		if startX > endX {
+			xDir = -1
+		}
+		if startY > endY {
+			yDir = -1
+		}
+		currX := startX
+		currY := startY
+		for currX != endX && currY != endY {
+			coords = append(coords, coord{x: currX, y: currY})
+			currX += xDir
+			currY += yDir
+		}
+		coords = append(coords, coord{x: currX, y: currY})
 		return coords
 	}
 	for x := int(math.Min(float64(startX), float64(endX))); x <= int(math.Max(float64(startX), float64(endX))); x++ {
@@ -166,7 +182,7 @@ func BuildOcean(coords []coord) map[coord]int {
 }
 
 func main() {
-	inputs := utils.AsInputList(utils.ReadInput("/Users/dignacio/Documents/adventofcode/day05/input_"))
+	inputs := utils.AsInputList(utils.ReadInput("/Users/dignacio/Documents/adventofcode/day05/input_part_1"))
 	coords := GetCoords(inputs)
 	ocean := BuildOcean(coords)
 	overlapped := 0
