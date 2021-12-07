@@ -21,7 +21,16 @@ func ParseInput(input string) []int {
 func FindCost(crabs []int, pos int) int {
 	sum := 0
 	for i := 0; i < len(crabs); i++ {
-		sum += int(math.Abs(float64(crabs[i] - pos)))
+		seed := int(math.Abs(float64(crabs[i] - pos)))
+		sum += TriNum(seed)
+	}
+	return sum
+}
+
+func TriNum(seed int) int {
+	sum := 0
+	for i := 0; i <= seed; i++ {
+		sum += i
 	}
 	return sum
 }
