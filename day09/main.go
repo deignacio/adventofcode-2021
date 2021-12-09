@@ -3,6 +3,9 @@ package main
 import (
 	"adventofcode/utils"
 	"fmt"
+	"image"
+	"image/png"
+	"os"
 	"sort"
 	"strconv"
 	"strings"
@@ -172,4 +175,26 @@ func main() {
 	fmt.Println(basins)
 	basinCount := len(basins)
 	fmt.Println(basins[basinCount - 1] * basins[basinCount - 2] * basins[basinCount - 3])
+	img := image.NewRGBA(image.Rect(0, 0, len(depths), len(depths[0])))
+	i := 0
+	for x := 0; x < len(depths); x++ {
+		for y := 0; y < len(depths[0]); y++ {
+			if depths[x][y] == -1 {
+				img.Pix[i] = 0
+				img.Pix[i+1] = 0
+				img.Pix[i+2] = 0
+				img.Pix[i+3] = 255
+			} else {
+				depth := uint8(depths[x][y])
+				img.Pix[i] = depth
+				img.Pix[i+1] = depth
+				img.Pix[i+2] = depth
+				img.Pix[i+3] = 255
+			}
+			i += 4
+		}
+	}
+	output, _ := os.Create("/Users/dignacio/Documents/adventofcode/day09/input_part_1.png")
+	png.Encode(output, img)
+	output.Close()
 }
