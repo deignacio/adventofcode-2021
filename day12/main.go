@@ -67,7 +67,7 @@ func Traverse(caves map[string]network) []string {
 	routes := [][]string{{caves["start"].head.name}}
 	valid := make([][]string, 0)
 	iters := 0
-	for len(routes) > 0 && iters < 100 {
+	for len(routes) > 0 && iters < 1000 {
 		//fmt.Println(len(routes), routes)
 		next := make([][]string, 0)
 		for j := range routes {
@@ -77,21 +77,38 @@ func Traverse(caves map[string]network) []string {
 				valid = append(valid, route)
 				continue
 			}
+
 			options := caves[tail].options
 			for i := range options {
 				option := options[i]
-				found := false
-				for _, existing := range route {
-					if option.name == existing && !caves[existing].head.big {
-						found = true
+				if option.name == "start" {
+					continue
+				}
+				toAdd := make([]string, len(route))
+				copy(toAdd, route)
+				toAdd = append(toAdd, option.name)
+				counts := make(map[string]int, 0)
+				for _, stop := range toAdd {
+					_, present := counts[stop]
+					if present && strings.ToLower(stop) == stop {
+						counts[stop] += 1
+					} else {
+						counts[stop] = 1
 					}
 				}
-				if !found || option.big {
-					toAdd := make([]string, len(route))
-					copy(toAdd, route)
-					toAdd = append(toAdd, option.name)
-					next = append(next, toAdd)
+				numTwos := 0
+				numMore := 0
+				for _, count := range counts {
+					if count == 2 {
+						numTwos++
+					} else if count > 2 {
+						numMore++
+					}
 				}
+				if numTwos > 1 || numMore > 0 {
+					continue
+				}
+				next = append(next, toAdd)
 			}
 		}
 		routes = next
