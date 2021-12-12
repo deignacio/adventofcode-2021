@@ -3,6 +3,11 @@ package main
 import (
 	"adventofcode/utils"
 	"fmt"
+	"image"
+	"image/color"
+	"image/color/palette"
+	"image/gif"
+	"os"
 	"strconv"
 )
 
@@ -12,7 +17,7 @@ func FilterLines(lines []string) [][]int {
 		line := lines[i]
 		row := make([]int, len(line))
 		for j := 0; j < len(line); j++ {
-			value, _ := strconv.Atoi(line[j:j+1])
+			value, _ := strconv.Atoi(line[j : j+1])
 			row[j] = value
 		}
 		octopuses = append(octopuses, row)
@@ -66,6 +71,29 @@ func Flash(octopuses [][]int, x int, y int) int {
 	return flashes
 }
 
+func Dump(octopuses [][]int) *image.Paletted {
+	scale := 25
+	w := len(octopuses) * scale
+	h := len(octopuses[0]) * scale
+	img := image.NewPaletted(image.Rect(0, 0, w, h), palette.Plan9)
+	for x := 0; x < len(octopuses); x++ {
+		for y := 0; y < len(octopuses[0]); y++ {
+			brightness := uint8(octopuses[x][y]) * 25
+			for dx := 0; dx < scale; dx++ {
+				for dy := 0; dy < scale; dy++ {
+					img.Set(x*scale+dx, y*scale+dy, color.RGBA{
+						brightness,
+						brightness,
+						brightness,
+						255,
+					})
+				}
+			}
+		}
+	}
+	return img
+}
+
 func main() {
 	lines := utils.AsInputList(utils.ReadInput("/Users/dignacio/Documents/adventofcode/day11/input_part_1"))
 	octopuses := FilterLines(lines)
@@ -74,13 +102,25 @@ func main() {
 	size := len(octopuses) * len(octopuses[0])
 	fmt.Println(size)
 	fmt.Println(total, octopuses)
-	for i := 1; i < 1000000; i++ {
+	images := make([]*image.Paletted, 0)
+	delays := make([]int, 0)
+	images = append(images, Dump(octopuses))
+	delays = append(delays, 0)
+	for i := 1; i < 500; i++ {
 		flashes := OneStep(octopuses)
+		images = append(images, Dump(octopuses))
+		delays = append(delays, 0)
 		total += flashes
 		if flashes >= size {
 			first = i
 			break
 		}
 	}
+	out, _ := os.Create("/Users/dignacio/Documents/adventofcode/day11/output/octopuses.gif")
+	defer out.Close()
+	gif.EncodeAll(out, &gif.GIF{
+		Image: images,
+		Delay: delays,
+	})
 	fmt.Println(total, first, octopuses)
 }
