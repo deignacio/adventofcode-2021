@@ -107,7 +107,7 @@ func CountLeft(dots map[int]map[int]bool, maxX int, maxY int) int {
 	return visible
 }
 
-func Dump(dots map[int]map[int]bool, maxX int, maxY int) {
+func Dump(dots map[int]map[int]bool, step int, maxX int, maxY int) {
 	img := image.NewRGBA(image.Rect(0, 0, maxX+1, maxY+1))
 	i := 0
 		for y := 0; y <= maxY; y++ {
@@ -127,7 +127,8 @@ func Dump(dots map[int]map[int]bool, maxX int, maxY int) {
 			i += 4
 		}
 	}
-	output, _ := os.Create("/Users/dignacio/Documents/adventofcode/day13/input_part_1.png")
+	path := fmt.Sprintf("/Users/dignacio/Documents/adventofcode/day13/output_fold_%d.png", step)
+	output, _ := os.Create(path)
 	png.Encode(output, img)
 	output.Close()
 }
@@ -147,10 +148,10 @@ func main() {
 			}
 		}
 	}
-	for _, fold := range folds {
+	for i, fold := range folds {
 		dots, maxX, maxY = ExecuteFold(dots, fold, maxX, maxY)
 		//visible := CountLeft(dots, maxX, maxY)
+		Dump(dots, i, maxX, maxY)
 	}
 	fmt.Println(maxX, maxY, dots)
-	Dump(dots, maxX, maxY)
 }
