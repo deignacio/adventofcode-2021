@@ -40,8 +40,8 @@ func main() {
 	inputPath := os.Args[1]
 	inputs := utils.AsInputList(utils.ReadInput(inputPath))
 	crabs := ParseInput(inputs[0])
-	min := math.MaxInt
-	max := math.MinInt
+	min := math.MaxInt64
+	max := math.MinInt64
 	for i := 0; i < len(crabs); i++ {
 		if crabs[i] < min {
 			min = crabs[i]
@@ -51,7 +51,7 @@ func main() {
 		}
 	}
 	costs := make([]int, max-min+1)
-	lowestCost := math.MaxInt
+	lowestCost := math.MaxInt64
 	for i := 0; i <= max-min; i++ {
 		cost := FindCost(crabs, min+i)
 		if cost < lowestCost {
