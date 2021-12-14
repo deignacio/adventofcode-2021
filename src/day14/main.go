@@ -2,83 +2,102 @@ package main
 
 import (
 	"adventofcode/utils"
-	"bufio"
 	"fmt"
-	"io"
 	"math"
 	"os"
 	"strings"
-	"time"
 )
 
-func BuildRules(lines []string) map[byte]map[byte]byte {
-	rules := make(map[byte]map[byte]byte)
+func BuildRules(lines []string) map[string]string {
+	rules := make(map[string]string)
 	for _, rule := range lines {
 		split := strings.Split(rule, " ")
-		head := split[0][0]
-		tail := split[0][1]
-		val, present := rules[head]
-		if !present {
-			val = make(map[byte]byte, 0)
-		}
-		val[tail] = split[2][0]
-		rules[head] = val
+		step := split[0]
+		rules[step] = split[2]
 	}
 	return rules
 }
 
-func ApplyRules(inStep int, outStep int, rules map[byte]map[byte]byte, outputRoot string) {
-	in, _ := os.Open(fmt.Sprintf("%s/day14/output_step_%d", outputRoot, inStep))
-	reader := bufio.NewReader(in)
-	out, _ := os.Create(fmt.Sprintf("%s/day14/output_step_%d", outputRoot, outStep))
-	writer := bufio.NewWriter(out)
-	current := make([]byte, 1)
-	next := make([]byte, 1)
-	reader.Read(current)
-	for {
-		_, err := reader.Read(next)
-		if err == io.EOF {
-			break
-		}
-		writer.Write(current)
-		tail := rules[current[0]]
-		toInsert, present := tail[next[0]]
+func TranslatePolymer(polymer string) (map[string]int, byte, byte) {
+	generation := make(map[string]int)
+	for i := 0; i+1 < len(polymer); i++ {
+		step := polymer[i:i+2]
+		_, present := generation[step]
 		if present {
-			writer.WriteString(string(toInsert))
-		}
-		copy(current, next)
-	}
-	writer.Write(current)
-	in.Close()
-	writer.Flush()
-	out.Close()
-}
-
-func ApplyRule(head byte, tail byte, depth int, max int, rules map[byte]map[byte]byte, counts map[byte]int) {
-	if depth == max {
-		_, present := counts[tail]
-		if present {
-			counts[tail]++
+			generation[step]++
 		} else {
-			counts[tail] = 1
+			generation[step] = 1
 		}
-		ComputeSize(counts)
-		return
 	}
-	rule := rules[head]
-	toInsert, present := rule[tail]
-	if present {
-		ApplyRule(head, toInsert, depth + 1, max, rules, counts)
-		ApplyRule(toInsert, tail, depth + 1, max, rules, counts)
-	}
+	return generation, polymer[0], polymer[len(polymer)-1]
 }
 
-func ComputeSize(counts map[byte]int) {
-	sum := 0
+func LanternPolymerIteration(generation map[string]int, rules map[string]string) map[string]int {
+	next := make(map[string]int)
+	for step, count := range generation {
+		rule, hasRule := rules[step]
+		if hasRule {
+			head := step[0:1] + rule
+			_, hasHead := next[head]
+			if hasHead {
+				next[head] += count
+			} else {
+				next[head] = count
+			}
+			tail := rule + step[1:2]
+			_, hasTail := next[tail]
+			if hasTail {
+				next[tail] += count
+			} else {
+				next[tail] = count
+			}
+		}
+
+	}
+	return next
+}
+
+func CountElements(generation map[string]int, first byte, last byte) map[byte]int {
+	counts := make(map[byte]int)
+	counts[first] = 1
+	counts[last] = 1
+	for step, count := range generation {
+		head := step[0]
+		_, hasHead := counts[head]
+		if hasHead {
+			counts[head] += count
+		} else {
+			counts[head] = count
+		}
+		tail := step[1]
+		_, hasTail := counts[tail]
+		if hasTail {
+			counts[tail] += count
+		} else {
+			counts[tail] = count
+		}
+	}
+	for step := range counts {
+		counts[step] /= 2
+	}
+	return counts
+}
+
+func main() {
+	inputPath := os.Args[1]
+	lines := utils.AsInputList(utils.ReadInput(inputPath))
+	generation, first, last := TranslatePolymer(lines[0])
+	rules := BuildRules(lines[2:])
+	numSteps := 40
+	fmt.Println(0, generation)
+	for i := 1; i <= numSteps; i++ {
+		generation = LanternPolymerIteration(generation, rules)
+		fmt.Println(i, generation)
+	}
+	counts := CountElements(generation, first, last)
 	max := math.MinInt
 	min := math.MaxInt
 	for _, val := range counts {
-		sum += val
 		if val > max {
 			max = val
 		}
@@ -86,47 +105,5 @@ func ComputeSize(counts map[byte]int) {
 			min = val
 		}
 	}
-	if sum % (100 * 1024 * 1024) == 0 {
-		fmt.Println(time.Now(), sum, counts, max, min, max-min)
-	}
-}
-
-func CountPairs(outputRoot string, step int) map[string]int {
-	count := make(map[string]int)
-	in, _ := os.Open(fmt.Sprintf("%s/day14/output_step_%d", outputRoot, step))
-	reader := bufio.NewReader(in)
-	current := make([]byte, 1)
-	for {
-		_, err := reader.Read(current)
-		if err == io.EOF {
-			break
-		}
-		count[string(current)]++
-	}
-	in.Close()
-	return count
-}
-
-func DumpStep(polymer string, step int, outputRoot string) {
-	path := fmt.Sprintf("%s/day14/output_step_%d", outputRoot, step)
-	output, _ := os.Create(path)
-	output.WriteString(polymer)
-	output.Close()
-}
-
-func main() {
-	inputPath := os.Args[1]
-	lines := utils.AsInputList(utils.ReadInput(inputPath))
-	polymer := []byte(lines[0])
-	rules := BuildRules(lines[2:])
-	numSteps := 40
-	current := polymer[0]
-	counts := make(map[byte]int)
-	counts[current] = 1
-	for _, next := range polymer[1:] {
-		fmt.Println(string(current), string(next), counts, time.Now())
-		ApplyRule(current, next, 0, numSteps, rules, counts)
-		current = next
-	}
-	fmt.Println(counts)
+	fmt.Println(counts, max, min, max-min)
 }
